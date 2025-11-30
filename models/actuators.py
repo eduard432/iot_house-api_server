@@ -16,12 +16,11 @@ class ActuatorCommand(ActuatorCommandBase):
     created_at: datetime
 
 class ActuatorStateBase(BaseModel):
-    device_id: int
     state: str
 
 class ActuatorStateCreate(ActuatorStateBase):
+    device_id: int
     pass
 
 class ActuatorState(ActuatorStateBase):
-    id: int
     updated_at: datetime

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from models.sensors import SensorTypeCreate, SensorType, DeviceSensorCreate, DeviceSensor, SensorReading, SensorReadingCreate
+from controllers.sensors import save_sensor_reading
 from db import db
 
 router = APIRouter(prefix="/sensors", tags=["sensors"])
@@ -93,22 +94,4 @@ def get_last_sensor_reading(device_sensor_id: int):
 # CREATE SENSOR READING
 @router.post("/readings", response_model=SensorReading)
 def create_sensor_reading(payload: SensorReadingCreate):
-    conn = db.connect()
-    cursor = conn.cursor(dictionary=True)
-
-    query = """
-    INSERT INTO sensor_readings (device_sensor_id, value)
-    VALUES (%s, %s)
-    """
-    cursor.execute(query, (payload.device_sensor_id, payload.value))
-    conn.commit()
-
-    new_id = cursor.lastrowid
-
-    cursor.execute("SELECT * FROM sensor_readings WHERE id = %s", (new_id,))
-    item = cursor.fetchone()
-
-    cursor.close()
-    conn.close()
-
-    return item
+    return save_sensor_reading(payload)
