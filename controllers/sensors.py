@@ -2,6 +2,7 @@ from models.sensors import SensorReadingCreate
 from db import db
 
 def save_sensor_reading(data: SensorReadingCreate):
+    print("Saving sensor reading")
     conn = db.connect()
     cursor = conn.cursor(dictionary=True)
 

@@ -4,6 +4,7 @@ from models.actuators import ActuatorStateCreate
 from db import db
 
 def save_actuator_state(data: ActuatorStateCreate):
+    print("Saving actuator state")
     conn = db.connect()
     cursor = conn.cursor(dictionary=True)
 

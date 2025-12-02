@@ -1,10 +1,11 @@
 import paho.mqtt.client as mqtt
 import asyncio
 import json
-
-# Controladores (asume que los tienes)
 from controllers.sensors import save_sensor_reading
 from controllers.actuators import save_actuator_state
+
+from models.actuators import ActuatorStateCreate
+from models.sensors import SensorReadingCreate
 
 ws_clients = []
 main_loop = asyncio.get_event_loop()
@@ -40,14 +41,13 @@ def on_message(client, userdata, msg):
         # Guardar *cada* sensor_id individualmente
         for device_sensor_id, value in payload.items():
 
-            reading_data = {
-                "device_id": device_id,
-                "device_sensor_id": device_sensor_id,
-                "value": value
-            }
+            reading = SensorReadingCreate(
+                device_sensor_id=device_sensor_id,
+                value = value,
+            )
 
             # Guardar en la DB
-            save_sensor_reading(reading_data)
+            save_sensor_reading(reading)
 
             # Notificar al frontend un evento por sensor
             normalized_msg = {
@@ -75,10 +75,11 @@ def on_message(client, userdata, msg):
 
         if state is not None:
             # Guardar en la DB
-            save_actuator_state({
-                "device_id": device_id,
-                "state": state
-            })
+            state = ActuatorStateCreate(
+                state=state,
+                device_id=device_id
+            )
+            save_actuator_state(state)
 
         # Notificar exactamente lo que llegó
         for ws in ws_clients:
