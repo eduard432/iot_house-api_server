@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
 # Importamos los routers
@@ -9,7 +10,19 @@ from routes.actuators import router as actuators_router
 # Importamos MQTT y la lista global de WebSockets
 from mqtt import mqtt_client, ws_clients
 
+origins = [
+    "*",
+]
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 @app.on_event("startup")
 def start_mqtt():

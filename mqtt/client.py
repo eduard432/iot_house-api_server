@@ -76,23 +76,28 @@ def on_message(client, userdata, msg):
     if topic.startswith("iot_house_tec/casa/actuator/state/"):
 
         device_id = topic.split("/")[-1]
-        state = message.get("payload", {}).get("state")
+        state_value = message.get("payload", {}).get("state")
 
-        if state is not None:
+        if state_value is not None:
             # Guardar en la DB
-            state = ActuatorStateCreate(
-                state=state,
+            actuator_state = ActuatorStateCreate(
+                state=state_value,
                 device_id=device_id
             )
-            save_actuator_state(state)
+            save_actuator_state(actuator_state)
 
         # Notificar exactamente lo que llegó
         for ws in ws_clients:
-            main_loop.create_task(ws.send_text(json.dumps({
-                "type": "actuator_state",
-                "device_id": device_id,
-                "state": state
-            })))
+            if ws.application_state == WebSocketState.CONNECTED:
+                try:
+                        main_loop.create_task(ws.send_text(json.dumps({
+                            "type": "actuator_state",
+                            "device_id": device_id,
+                            "state": state_value
+                        })))
+                except:
+                    print("Error en ws")
+            
 
         return
 
@@ -102,11 +107,11 @@ def on_message(client, userdata, msg):
     # ---------------------------------------------------------
 
     # Enviar mensaje genérico al frontend si no entró en los casos anteriores
-    for ws in ws_clients:
-        main_loop.create_task(ws.send_text(json.dumps({
-            "topic": topic,
-            "message": message
-        })))
+    # for ws in ws_clients:
+    #     main_loop.create_task(ws.send_text(json.dumps({
+    #         "topic": topic,
+    #         "message": message
+    #     })))
 
 
 mqtt_client.on_connect = on_connect
