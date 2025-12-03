@@ -11,6 +11,11 @@ from mqtt import mqtt_client, ws_clients
 
 app = FastAPI()
 
+@app.on_event("startup")
+def start_mqtt():
+    mqtt_client.connect("test.mosquitto.org", 1883)
+    mqtt_client.loop_start()
+
 # -------------------------------
 # WebSocket: solo envío de estados, no recibe comandos
 # -------------------------------

@@ -7,7 +7,7 @@ from mqtt import mqtt_client
 
 router = APIRouter(prefix="/actuators", tags=["actuators"])
 
-@router.post("/commands", response_model=ActuatorCommand)
+@router.post("/commands", response_model=ActuatorCommandCreate)
 def create_command(cmd: ActuatorCommandCreate):
     conn = db.connect()
     cursor = conn.cursor()
@@ -24,7 +24,8 @@ def create_command(cmd: ActuatorCommandCreate):
         "type": "command",
         "device_id": cmd.device_id,
         "payload": {
-            "action": cmd.value
+            "action": cmd.command,
+            "value": cmd.value
         }
     }))
 
@@ -34,7 +35,7 @@ def create_command(cmd: ActuatorCommandCreate):
     cursor.close()
     conn.close()
 
-    return ActuatorCommand(id=new_id, **cmd.model_dump())
+    return ActuatorCommandCreate(**cmd.model_dump())
 
 @router.get("/status", response_model=list[ActuatorState])
 def get_actuators_states():

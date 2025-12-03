@@ -3,9 +3,9 @@ import asyncio
 import json
 from controllers.sensors import save_sensor_reading
 from controllers.actuators import save_actuator_state
-
-from models.actuators import ActuatorStateCreate
 from models.sensors import SensorReadingCreate
+from models.actuators import ActuatorStateCreate
+from starlette.websockets import WebSocketState
 
 ws_clients = []
 main_loop = asyncio.get_event_loop()
@@ -15,6 +15,7 @@ mqtt_client = mqtt.Client()
 def on_connect(client, userdata, flags, rc):
     print("MQTT conectado:", rc)
     client.subscribe("iot_house_tec/casa/#")
+
 
 def on_message(client, userdata, msg):
     topic: str = msg.topic
@@ -52,13 +53,17 @@ def on_message(client, userdata, msg):
             # Notificar al frontend un evento por sensor
             normalized_msg = {
                 "type": "sensor_reading",
-                "device_id": device_id,
-                "sensor_id": device_sensor_id,
+                "device_id": int(device_id),
+                "sensor_id": int(device_sensor_id),
                 "value": value
             }
 
             for ws in ws_clients:
-                main_loop.create_task(ws.send_text(json.dumps(normalized_msg)))
+                if ws.application_state == WebSocketState.CONNECTED:
+                    try:
+                        main_loop.create_task(ws.send_text(json.dumps(normalized_msg)))
+                    except:
+                        print("Error en ws")
 
         return  # evita procesar como otro tipo
 
@@ -104,9 +109,5 @@ def on_message(client, userdata, msg):
         })))
 
 
-
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
-
-mqtt_client.connect("test.mosquitto.org", 1883)
-mqtt_client.loop_start()
